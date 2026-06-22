@@ -2,7 +2,7 @@ import sys
 import cv2
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QPushButton, QLabel, QFileDialog, 
-                             QMessageBox, QTabWidget, QCheckBox)
+                             QMessageBox, QTabWidget, QCheckBox, QSlider)
 from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtCore import Qt, QTimer
 
@@ -95,6 +95,31 @@ class ProyectoFinalApp(QMainWindow):
         btn_layout.addWidget(self.btn_load_img)
         btn_layout.addWidget(self.btn_predict_img)
         layout.addLayout(btn_layout)
+
+        # Controles de Umbral (Sliders)
+        sliders_layout = QHBoxLayout()
+        
+        self.lbl_slider_yolo_img = QLabel("YOLO Umbral: 20%")
+        self.lbl_slider_yolo_img.setStyleSheet("color: white; font-weight: bold;")
+        self.slider_yolo_img = QSlider(Qt.Orientation.Horizontal)
+        self.slider_yolo_img.setRange(5, 95)
+        self.slider_yolo_img.setValue(20)
+        self.slider_yolo_img.valueChanged.connect(self.update_img_labels)
+        self.slider_yolo_img.sliderReleased.connect(self.run_image_prediction)
+        
+        self.lbl_slider_mask_img = QLabel("Mask R-CNN Umbral: 50%")
+        self.lbl_slider_mask_img.setStyleSheet("color: white; font-weight: bold;")
+        self.slider_mask_img = QSlider(Qt.Orientation.Horizontal)
+        self.slider_mask_img.setRange(5, 95)
+        self.slider_mask_img.setValue(50)
+        self.slider_mask_img.valueChanged.connect(self.update_img_labels)
+        self.slider_mask_img.sliderReleased.connect(self.run_image_prediction)
+        
+        sliders_layout.addWidget(self.lbl_slider_yolo_img)
+        sliders_layout.addWidget(self.slider_yolo_img)
+        sliders_layout.addWidget(self.lbl_slider_mask_img)
+        sliders_layout.addWidget(self.slider_mask_img)
+        layout.addLayout(sliders_layout)
         
         # Títulos
         titles_layout = QHBoxLayout()
@@ -128,6 +153,10 @@ class ProyectoFinalApp(QMainWindow):
             time_layout.addWidget(lbl)
         layout.addLayout(time_layout)
 
+    def update_img_labels(self):
+        self.lbl_slider_yolo_img.setText(f"YOLO Umbral: {self.slider_yolo_img.value()}%")
+        self.lbl_slider_mask_img.setText(f"Mask R-CNN Umbral: {self.slider_mask_img.value()}%")
+
     def load_image(self):
         file_name, _ = QFileDialog.getOpenFileName(self, "Seleccionar Imagen", "", "Images (*.png *.jpg *.jpeg)")
         if file_name:
@@ -146,14 +175,17 @@ class ProyectoFinalApp(QMainWindow):
         self.btn_predict_img.setEnabled(False)
         QApplication.processEvents()
         
+        yolo_thresh = self.slider_yolo_img.value() / 100.0
+        mask_thresh = self.slider_mask_img.value() / 100.0
+        
         # Ejecutar YOLO
-        yolo_img, ms_yolo = self.vision.predict_yolo(self.current_cv_image)
+        yolo_img, ms_yolo = self.vision.predict_yolo(self.current_cv_image, conf_thresh=yolo_thresh)
         self.display_image(yolo_img, self.lbl_img_yolo)
         self.lbl_time_img_yolo.setText(f"Tiempo YOLO: {ms_yolo:.1f} ms")
         QApplication.processEvents()
 
         # Ejecutar Mask R-CNN
-        mask_img, ms_mask = self.vision.predict_mask_rcnn(self.current_cv_image)
+        mask_img, ms_mask = self.vision.predict_mask_rcnn(self.current_cv_image, conf_thresh=mask_thresh)
         self.display_image(mask_img, self.lbl_img_mask)
         self.lbl_time_img_mask.setText(f"Tiempo Mask R-CNN: {ms_mask:.1f} ms")
                 
@@ -198,6 +230,29 @@ class ProyectoFinalApp(QMainWindow):
         checks_layout.addWidget(self.chk_mask)
         checks_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addLayout(checks_layout)
+
+        # Controles de Umbral para Video (Sliders)
+        vid_sliders_layout = QHBoxLayout()
+        
+        self.lbl_slider_yolo_vid = QLabel("YOLO Umbral: 20%")
+        self.lbl_slider_yolo_vid.setStyleSheet("color: white; font-weight: bold;")
+        self.slider_yolo_vid = QSlider(Qt.Orientation.Horizontal)
+        self.slider_yolo_vid.setRange(5, 95)
+        self.slider_yolo_vid.setValue(20)
+        self.slider_yolo_vid.valueChanged.connect(self.update_vid_labels)
+        
+        self.lbl_slider_mask_vid = QLabel("Mask R-CNN Umbral: 50%")
+        self.lbl_slider_mask_vid.setStyleSheet("color: white; font-weight: bold;")
+        self.slider_mask_vid = QSlider(Qt.Orientation.Horizontal)
+        self.slider_mask_vid.setRange(5, 95)
+        self.slider_mask_vid.setValue(50)
+        self.slider_mask_vid.valueChanged.connect(self.update_vid_labels)
+        
+        vid_sliders_layout.addWidget(self.lbl_slider_yolo_vid)
+        vid_sliders_layout.addWidget(self.slider_yolo_vid)
+        vid_sliders_layout.addWidget(self.lbl_slider_mask_vid)
+        vid_sliders_layout.addWidget(self.slider_mask_vid)
+        layout.addLayout(vid_sliders_layout)
         
         # Títulos y Contenedores
         titles_layout = QHBoxLayout()
@@ -230,6 +285,10 @@ class ProyectoFinalApp(QMainWindow):
             lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
             metrics_layout.addWidget(lbl)
         layout.addLayout(metrics_layout)
+
+    def update_vid_labels(self):
+        self.lbl_slider_yolo_vid.setText(f"YOLO Umbral: {self.slider_yolo_vid.value()}%")
+        self.lbl_slider_mask_vid.setText(f"Mask R-CNN Umbral: {self.slider_mask_vid.value()}%")
 
     def start_webcam(self):
         self.cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
@@ -274,9 +333,12 @@ class ProyectoFinalApp(QMainWindow):
             
         frame = cv2.resize(frame, (600, 450))
         
+        yolo_thresh = self.slider_yolo_vid.value() / 100.0
+        mask_thresh = self.slider_mask_vid.value() / 100.0
+        
         # Lógica delegada a la clase VisionManager
         if self.chk_yolo.isChecked():
-            yolo_img, ms_yolo = self.vision.predict_yolo(frame)
+            yolo_img, ms_yolo = self.vision.predict_yolo(frame, conf_thresh=yolo_thresh)
             fps_yolo = 1000.0 / (ms_yolo + 0.0001)
             self.display_fixed_image(yolo_img, self.lbl_vid_yolo)
             self.lbl_fps_yolo.setText(f"FPS YOLO: {fps_yolo:.1f}")
@@ -285,7 +347,7 @@ class ProyectoFinalApp(QMainWindow):
             self.lbl_fps_yolo.setText("FPS YOLO: 0")
             
         if self.chk_mask.isChecked():
-            mask_img, ms_mask = self.vision.predict_mask_rcnn(frame)
+            mask_img, ms_mask = self.vision.predict_mask_rcnn(frame, conf_thresh=mask_thresh)
             fps_mask = 1000.0 / (ms_mask + 0.0001)
             self.display_fixed_image(mask_img, self.lbl_vid_mask)
             self.lbl_fps_mask.setText(f"FPS Mask R-CNN: {fps_mask:.1f}")

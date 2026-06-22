@@ -65,7 +65,7 @@ class VisionManager:
             cfg.merge_from_file(config_path)
             cfg.MODEL.ROI_HEADS.NUM_CLASSES = 5
             cfg.MODEL.WEIGHTS = "mask_rcnn_5clases.pth"
-            cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
+            cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.05
             
             if not self.has_gpu:
                 cfg.MODEL.DEVICE = "cpu"
@@ -77,28 +77,34 @@ class VisionManager:
         else:
             raise Exception("Detectron2 no está instalado o configurado.")
 
-    def predict_yolo(self, frame):
+    def predict_yolo(self, frame, conf_thresh=0.2):
         """Infiere sobre una imagen usando YOLOv8. Retorna la imagen dibujada y el tiempo en ms."""
         if not self.yolo_model:
             return frame, 0
             
         t0 = time.time()
         # half=True acelera mucho en tarjetas NVIDIA como la GTX 1650
-        results = self.yolo_model.predict(frame, conf=0.2, device=0 if self.has_gpu else 'cpu', verbose=False)
+        results = self.yolo_model.predict(frame, conf=conf_thresh, device=0 if self.has_gpu else 'cpu', verbose=False)
         annotated_frame = results[0].plot()
         elapsed_ms = (time.time() - t0) * 1000
         
         return annotated_frame, elapsed_ms
 
-    def predict_mask_rcnn(self, frame):
+    def predict_mask_rcnn(self, frame, conf_thresh=0.5):
         """Infiere sobre una imagen usando Mask R-CNN. Retorna la imagen dibujada y el tiempo en ms."""
         if not self.mask_rcnn_predictor:
             return frame, 0
             
         t0 = time.time()
         outputs = self.mask_rcnn_predictor(frame)
+        
+        # Filtrar dinámicamente según el conf_thresh
+        instances = outputs["instances"].to("cpu")
+        keep = instances.scores >= conf_thresh
+        filtered_instances = instances[keep]
+        
         v = Visualizer(frame[:, :, ::-1], metadata=self.mask_metadata, scale=1.0)
-        out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+        out = v.draw_instance_predictions(filtered_instances)
         annotated_frame = out.get_image()[:, :, ::-1]
         elapsed_ms = (time.time() - t0) * 1000
         
