@@ -25,9 +25,13 @@ Se desarrolló una interfaz gráfica (GUI) en PyQt6 para la inferencia y compara
 Se observa el recorte milimétrico de las máscaras generadas por Mask R-CNN versus las cajas delimitadoras ultrarrápidas de YOLO.
 ![Interfaz de Imágenes](capturas/foto.png)
 
+> **Explicación de Tiempos de Inferencia:** Como se aprecia en la captura inferior de la interfaz, **YOLOv8 realiza la predicción en una fracción de tiempo minúscula (escala de pocos milisegundos)** gracias a su arquitectura *One-Stage* altamente optimizada. En contraste, **Mask R-CNN toma considerablemente más tiempo (ej. ~450ms o superior)** debido al gigantesco costo computacional necesario para calcular y trazar los polígonos exactos sobre los píxeles de la silueta del residuo.
+
 ### 3.2. Análisis en Tiempo Real (Video / Webcam)
 Ejecución en vivo demostrando la disparidad de fotogramas por segundo (FPS) en un mismo entorno de hardware.
 ![Interfaz de Video](capturas/video.png)
+
+> **Explicación de Fotogramas por Segundo (FPS):** Durante el procesamiento de video, la arquitectura del modelo determina la fluidez de la imagen. **YOLOv8 mantiene una tasa alta de FPS**, lo que permite una visión de cámara fluida y en auténtico "tiempo real". Por su parte, la red de generación de máscaras de **Mask R-CNN genera un cuello de botella**, provocando que los FPS caigan drásticamente, demostrando que su prioridad es la exactitud extrema y no la velocidad.
 
 ## 4. Métricas de Evaluación (Dataset Estandarizado COCO)
 Tras entrenar ambos modelos con nuestro dataset, se obtuvieron los siguientes resultados estáticos durante la evaluación sobre el conjunto de Validación.
