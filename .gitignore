@@ -1,0 +1,16 @@
+# Ignorar archivos pesados de modelos que superan el límite de 100MB de Github
+*.pth
+*.pt
+
+# Ignorar datasets locales y basura de python
+data/
+dataset_original/
+dataset_filtered/
+input/
+__pycache__/
+*.zip
+.DS_Store
+runs/
+
+# Ignorar la librería gigante de detectron2 clonada localmente (se instala en colab)
+detectron2/
