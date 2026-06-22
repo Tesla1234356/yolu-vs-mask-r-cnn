@@ -1,14 +1,36 @@
 # Comparativa de Detección de Objetos: Mask R-CNN vs YOLOv8 ♻️
 
-**Curso:** Visión Artificial - X ciclo, grupo B  
-**Objetivo:** Comparar la detección de residuos sólidos (5 clases) usando un enfoque basado en regiones (Mask R-CNN) y un enfoque de una sola etapa (YOLOv8).
+**Universidad Nacional del Altiplano Puno - Ingeniería de Sistemas**
 
-## 1. Arquitecturas Evaluadas
+**Curso:** Visión Artificial — **Docente:** Fernandez Chambi, Mayenka — **Semestre:** X, **Grupo:** B  
+**Autores:**
+* Quispe Ticona, Angel Pedro
+* Angles Quispe, Carlos Mauricio
+* Mamani Turpo, Elfer
+* Huanca Chambi, Cristian Brayan
+
+---
+
+## 1. Objetivo
+Comparar la detección de residuos sólidos (5 clases: Botella de Plástico, Lata, Vaso, Cartón, Envoltura) usando un enfoque basado en regiones (Mask R-CNN) y un enfoque de una sola etapa (YOLOv8).
+
+## 2. Arquitecturas Evaluadas
 * **YOLOv8 Nano:** Arquitectura *Single-Stage* que prioriza la velocidad de inferencia a través de cajas delimitadoras (Bounding Boxes). Ideal para aplicaciones en tiempo real.
 * **Mask R-CNN (ResNet50 FPN):** Arquitectura *Two-Stage* que recorta la silueta exacta del objeto (Segmentación de Instancias). Computacionalmente más pesada, pero extremadamente precisa delineando los bordes del objeto.
 
-## 2. Métricas de Evaluación (Dataset Estandarizado COCO)
-Tras entrenar ambos modelos con nuestro dataset estandarizado a 5 clases, se obtuvieron los siguientes resultados estáticos durante la evaluación sobre el conjunto de Validación. 
+## 3. Demostración de la Aplicación
+Se desarrolló una interfaz gráfica (GUI) en PyQt6 para la inferencia y comparativa en paralelo de ambos modelos, acelerada por hardware (NVIDIA GTX 1650).
+
+### 3.1. Análisis Estático (Imágenes)
+Se observa el recorte milimétrico de las máscaras generadas por Mask R-CNN versus las cajas delimitadoras ultrarrápidas de YOLO.
+![Interfaz de Imágenes](capturas/foto.png)
+
+### 3.2. Análisis en Tiempo Real (Video / Webcam)
+Ejecución en vivo demostrando la disparidad de fotogramas por segundo (FPS) en un mismo entorno de hardware.
+![Interfaz de Video](capturas/video.png)
+
+## 4. Métricas de Evaluación (Dataset Estandarizado COCO)
+Tras entrenar ambos modelos con nuestro dataset, se obtuvieron los siguientes resultados estáticos durante la evaluación sobre el conjunto de Validación.
 
 ### Resumen General (mAP@50)
 | Modelo | mAP@50 (Precisión General) | Precision (P) | Recall (R) |
@@ -27,11 +49,19 @@ Tras entrenar ambos modelos con nuestro dataset estandarizado a 5 clases, se obt
 | **Envoltura** | 42.39% | 24.70% |
 | **Cartón** | 30.40% | 22.40% |
 
-## 3. Rendimiento en Tiempo Real (Video / Webcam)
-Al ejecutar nuestra aplicación `app_proyecto_final.py` en hardware local (NVIDIA GTX 1650 con aceleración CUDA), encontramos comportamientos radicalmente distintos:
+## 5. Rendimiento en Tiempo Real
+* **Velocidad (FPS):** YOLOv8 logra procesar el flujo de video a altísimas tasas de cuadros por segundo, permitiendo una experiencia completamente fluida. Mask R-CNN, debido a la complejidad matemática de la generación de polígonos, sufre un cuello de botella, reduciendo los FPS significativamente cuando se ejecuta en secuencia.
+* **Calidad de Detección:** Mientras que YOLOv8 detecta el objeto encerrándolo en un rectángulo, Mask R-CNN logra aislar los píxeles exactos de la basura. Esto es indispensable para robótica de precisión (ej. brazos mecánicos clasificadores).
 
-* **Velocidad (FPS):** YOLOv8 logra procesar el flujo de video a altísimas tasas de cuadros por segundo, permitiendo una experiencia completamente fluida. Mask R-CNN, debido a la complejidad de la red matemática que genera los polígonos de las máscaras, sufre un cuello de botella, reduciendo los FPS significativamente cuando se evalúa en el mismo entorno y en el mismo hilo de ejecución.
-* **Calidad de Detección:** Mientras que YOLOv8 detecta el objeto rápidamente encerrándolo en un rectángulo, Mask R-CNN logra aislar los píxeles exactos de la basura. Esto sería indispensable si se usara, por ejemplo, un brazo robótico para recolectar el residuo sin tocar su entorno.
+## 6. Conclusión
+Si el objetivo es implementar una cámara de vigilancia en un basurero inteligente que cuente los residuos **en tiempo real**, la aproximación basada en **YOLO es superior** por su velocidad. Si el objetivo es análisis científico o robótica donde se requiere aislar la forma geométrica del desecho, **Mask R-CNN es la opción adecuada** pese a su mayor costo computacional.
 
-## 4. Conclusión
-Si el objetivo es implementar una cámara de vigilancia en un basurero inteligente que cuente los residuos que caen **en tiempo real**, la aproximación basada en **YOLO es superior** por su inmensa velocidad. Si el objetivo es análisis en laboratorio o robótica de precisión donde se requiere aislar la forma geométrica del desecho, **Mask R-CNN es la opción adecuada** pese a su mayor costo computacional.
+---
+## Referencias
+1. Girshick, R., Donahue, J., Darrell, T., & Malik, J. (2014). Rich feature hierarchies for accurate object detection and semantic segmentation. *CVPR*.
+2. He, K., Zhang, X., Ren, S., & Sun, J. (2016). Deep residual learning for image recognition. *CVPR*.
+3. Jocher, G., Chaurasia, A., & Qiu, J. (2023). *Ultralytics YOLO (v8.0.0)* [Software]. https://github.com/ultralytics/ultralytics
+4. Lin, T.-Y., Maire, M., Belongie, S., Hays, J., Perona, P., Ramanan, D., Dollár, P., & Zitnick, C. L. (2014). Microsoft COCO: Common objects in context. *ECCV*.
+5. Lin, T.-Y., Dollár, P., Girshick, R., He, K., Hariharan, B., & Belongie, S. (2017). Feature pyramid networks for object detection. *CVPR*.
+6. Redmon, J., Divvala, S., Girshick, R., & Farhadi, A. (2016). You only look once: Unified, real-time object detection. *CVPR*.
+7. Ren, S., He, K., Girshick, R., & Sun, J. (2015). Faster R-CNN: Towards real-time object detection with region proposal networks. *NeurIPS*.
